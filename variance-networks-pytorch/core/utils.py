@@ -34,13 +34,13 @@ def adjust_learning_rate(optimizer, lr):
         param_group['lr'] = lr
 
 
-def evaluate(net, dataloader, num_ens=1):
+def evaluate(net, dataloader, device, num_ens=1):
     """Calculate ensemble accuracy and NLL"""
     accs = []
     nlls = []
     for i, (inputs, labels) in enumerate(dataloader):
-        inputs, labels = Variable(inputs.cuda(async=True)), Variable(labels.cuda(async=True))
-        outputs = torch.zeros(inputs.shape[0], net.num_classes, num_ens).cuda()
+        inputs, labels = inputs.to(device=device), labels.to(device=device)
+        outputs = torch.zeros(inputs.shape[0], net.num_classes, num_ens).to(device=device)
         for j in range(num_ens):
             outputs[:, :, j] = F.log_softmax(net(inputs), dim=1).data
         accs.append(metrics.logit2acc(logmeanexp(outputs, dim=2), labels))

@@ -89,7 +89,7 @@ class LinearVarianceBe(ModuleWrapper):
         super(LinearVarianceBe, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.probs = torch.ones([out_features, in_features]).cuda() * 0.5
+        self.probs = torch.ones([out_features, in_features]).to(device=in_features.device) * 0.5
         self.W = Parameter(torch.Tensor(out_features, in_features))
         if bias:
             self.bias = Parameter(torch.Tensor(1, out_features))
@@ -195,7 +195,7 @@ class LinearVDO(ModuleWrapper):
 
         sigma2 = torch.exp(self.log_alpha) * self.W * self.W
         if self.permute_sigma:
-            sigma2 = sigma2.view(-1)[torch.randperm(self.in_features * self.out_features).cuda()].view(self.out_features, self.in_features)
+            sigma2 = sigma2.view(-1)[torch.randperm(self.in_features * self.out_features)].view(self.out_features, self.in_features)
 
         lrt_std = torch.sqrt(1e-16 + F.linear(x * x, sigma2))
         if self.training:
@@ -265,7 +265,7 @@ class ConvVDO(ModuleWrapper):
 
         sigma2 = torch.exp(self.log_alpha) * self.weight * self.weight
         if self.permute_sigma:
-            sigma2 = sigma2.view(-1)[torch.randperm(self.weight.nelement()).cuda()].view(self.weight.shape)
+            sigma2 = sigma2.view(-1)[torch.randperm(self.weight.nelement())].view(self.weight.shape)
 
         lrt_std = torch.sqrt(1e-16 + self.op_nobias(x * x, sigma2))
         if self.training:
@@ -330,7 +330,7 @@ class ConvVariance(ModuleWrapper):
 
         sigma2 = self.sigma * self.sigma
         if self.permute_sigma:
-            sigma2 = sigma2.view(-1)[torch.randperm(self.weight.shape).cuda()].view(self.weight.shape)
+            sigma2 = sigma2.view(-1)[torch.randperm(self.weight.shape)].view(self.weight.shape)
 
         lrt_std = Variable.sqrt(1e-16 + self.op_nobias(x * x, sigma2))
         if self.training:
@@ -353,7 +353,7 @@ class ConvVariance(ModuleWrapper):
 class ConvVarianceBe(ModuleWrapper):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
-                 padding=0, dilation=1, bias=True):
+                 padding=0, dilation=1, bias=True, device=None):
         super(ConvVarianceBe, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -362,7 +362,7 @@ class ConvVarianceBe(ModuleWrapper):
         self.padding = padding
         self.dilation = dilation
         self.groups = 1
-        self.probs = torch.ones([out_channels, in_channels, *self.kernel_size]).cuda() * 0.5
+        self.probs = torch.ones([out_channels, in_channels, *self.kernel_size]).to(device=device) * 0.5
         self.W = Parameter(torch.Tensor(out_channels, in_channels, *self.kernel_size))
         if bias:
             self.bias = Parameter(torch.Tensor(1, out_channels, 1, 1))
