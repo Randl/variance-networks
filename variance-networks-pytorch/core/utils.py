@@ -44,5 +44,5 @@ def evaluate(net, dataloader, num_ens=1):
         for j in range(num_ens):
             outputs[:, :, j] = F.log_softmax(net(inputs), dim=1).data
         accs.append(metrics.logit2acc(logmeanexp(outputs, dim=2), labels))
-        nlls.append(F.nll_loss(Variable(logmeanexp(outputs, dim=2)), labels, size_average=False).data.cpu().numpy())
+        nlls.append(F.nll_loss(Variable(logmeanexp(outputs, dim=2)), labels, reduction='sum').data.cpu().numpy())
     return np.mean(accs), np.sum(nlls)

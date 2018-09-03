@@ -193,11 +193,11 @@ class LinearVDO(ModuleWrapper):
         if self.bias is not None:
             lrt_mean = lrt_mean + self.bias
 
-        sigma2 = Variable.exp(self.log_alpha) * self.W * self.W
+        sigma2 = torch.exp(self.log_alpha) * self.W * self.W
         if self.permute_sigma:
             sigma2 = sigma2.view(-1)[torch.randperm(self.in_features * self.out_features).cuda()].view(self.out_features, self.in_features)
 
-        lrt_std = Variable.sqrt(1e-16 + F.linear(x * x, sigma2))
+        lrt_std = torch.sqrt(1e-16 + F.linear(x * x, sigma2))
         if self.training:
             eps = Variable(lrt_std.data.new(lrt_std.size()).normal_())
         else:
@@ -232,7 +232,7 @@ class ConvVDO(ModuleWrapper):
         self.weight = Parameter(torch.Tensor(
             out_channels, in_channels, *self.kernel_size))
         if bias:
-            self.bias = Parameter(torch.Tensor(1, out_channels, 1, 1))
+            self.bias = Parameter(torch.Tensor(out_channels))
         else:
             self.register_parameter('bias', None)
         self.op_bias = lambda input, kernel: F.conv2d(input, kernel, self.bias, self.stride, self.padding, self.dilation, self.groups)
@@ -263,11 +263,11 @@ class ConvVDO(ModuleWrapper):
         else:
             lrt_mean = self.op_bias(x, self.weight)
 
-        sigma2 = Variable.exp(self.log_alpha) * self.weight * self.weight
+        sigma2 = torch.exp(self.log_alpha) * self.weight * self.weight
         if self.permute_sigma:
             sigma2 = sigma2.view(-1)[torch.randperm(self.weight.nelement()).cuda()].view(self.weight.shape)
 
-        lrt_std = Variable.sqrt(1e-16 + self.op_nobias(x * x, sigma2))
+        lrt_std = torch.sqrt(1e-16 + self.op_nobias(x * x, sigma2))
         if self.training:
             eps = Variable(lrt_std.data.new(lrt_std.size()).normal_())
         else:

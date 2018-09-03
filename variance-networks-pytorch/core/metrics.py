@@ -1,6 +1,7 @@
 import numpy as np
 import torch.nn.functional as F
 from torch import nn
+import torch
 from torch.autograd import Variable
 
 
@@ -16,7 +17,7 @@ class SGVLB(nn.Module):
         for module in self.net.modules():
             if hasattr(module, 'kl_reg'):
                 kl = kl + module.kl_reg()
-        return F.cross_entropy(input, target, size_average=True) * self.train_size + kl_weight * kl
+        return F.cross_entropy(input, target, reduction='elementwise_mean') * self.train_size + kl_weight * kl
 
     def get_kl(self):
         kl = 0.0
@@ -37,12 +38,12 @@ def logit2acc(outputs, targets):
 
 
 def kl_ard(log_alpha):
-    return 0.5 * Variable.sum(Variable.log1p(Variable.exp(-log_alpha)))
+    return 0.5 * torch.sum(torch.log1p(torch.exp(-log_alpha)))
 
 
 def kl_loguni(log_alpha):
     k1, k2, k3 = 0.63576, 1.8732, 1.48695
     C = -k1
-    mdkl = k1 * F.sigmoid(k2 + k3 * log_alpha) - 0.5 * Variable.log1p(Variable.exp(-log_alpha)) + C
-    kl = -Variable.sum(mdkl)
+    mdkl = k1 * torch.sigmoid(k2 + k3 * log_alpha) - 0.5 * torch.log1p(torch.exp(-log_alpha)) + C
+    kl = -torch.sum(mdkl)
     return kl
