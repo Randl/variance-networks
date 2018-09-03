@@ -33,8 +33,23 @@ def lr_linear(epoch_num, decay_start, total_epochs, start_value):
     return start_value*float(total_epochs-epoch_num)/float(total_epochs-decay_start)
 
 
+def correct(output, target, topk=(1,)):
+    """Computes the correct@k for the specified values of k"""
+    maxk = max(topk)
+
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t().type_as(target)
+    correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+    res = []
+    for k in topk:
+        correct_k = correct[:k].view(-1).float().sum(0).item()
+        res.append(correct_k)
+    return res
+
 def logit2acc(outputs, targets):
-    return np.mean(outputs.cpu().numpy().argmax(axis=1) == targets.data.cpu().numpy())
+    corr = correct(outputs, targets)
+    return corr[0] / targets.shape[0]
 
 
 def kl_ard(log_alpha):

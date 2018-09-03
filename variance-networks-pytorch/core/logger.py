@@ -7,6 +7,8 @@ from collections import OrderedDict
 from tabulate import tabulate
 from pandas import DataFrame
 from time import gmtime, strftime
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 class Logger:
@@ -33,7 +35,7 @@ class Logger:
                 f.write(str_to_write + '\n')
                 f.flush()
 
-            print(str_to_write)
+            tqdm.write(str_to_write)
             sys.stdout.flush()
 
         self.print = prin
@@ -75,4 +77,10 @@ class Logger:
                 result = result.join(df, how='outer')
         result.to_csv(self.logs)
         if not silent:
+            for key in self.scalar_metrics.keys():
+                if 'acc' in key:
+                    epoch, acc = tuple(zip(*self.scalar_metrics[key]))
+                    plt.plot(epoch, acc, label=key)
+            plt.legend()
+            plt.savefig(self.path+'.png')
             self.print('The log/output/model have been saved to: ' + self.path + ' + .csv/.out/.cpt')
